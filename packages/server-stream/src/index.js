@@ -87,9 +87,15 @@ export class ServerStream {
         }, 1);
     }
 
-    write(rec) {
+    async write(rec) {
         rec.url = typeof window !== 'undefined' && window.location.href;
         rec.userAgent = userAgent;
+        
+        for (const [key, value] of Object.entries(rec)) {
+          if (!value.then) continue;
+          rec[key] = await value;
+        }
+         
         if (this.currentThrottleTimeout && this.writeCondition(rec)) {
             if (this.records[rec.msg]) {
                 this.records[rec.msg].count++;
