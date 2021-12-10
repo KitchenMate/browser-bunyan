@@ -4,7 +4,7 @@ const isBot = /bot|crawler|spider|crawling/i.test(userAgent);
 export class ServerStream {
 
     constructor(opts = {}) {
-        const {
+        let {
             method = 'PUT',
             url = '/log',
             throttleInterval = 3000,
@@ -22,7 +22,10 @@ export class ServerStream {
         if (flushOnClose && typeof window.fetch !== 'undefined') {
             // TODO: look at page visibility api here
             // https://github.com/GoogleChromeLabs/page-lifecycle
-            window.addEventListener('beforeunload', () => {
+            window.addEventListener('beforeunload', async () => {
+                if (url.then) {
+                    url = await url;
+                }
                 if (this.currentThrottleTimeout) {
                     window.clearTimeout(this.currentThrottleTimeout);
                 }
@@ -45,7 +48,11 @@ export class ServerStream {
         }
     }
 
-    start({ method, url, throttleInterval, withCredentials, onError }) {
+    async start({ method, url, throttleInterval, withCredentials, onError }) {
+        if (url.then) {
+            url = await url;
+        }
+        
         const throttleRequests = () => {
             // wait for any errors to accumulate
             this.currentThrottleTimeout = setTimeout(() => {
